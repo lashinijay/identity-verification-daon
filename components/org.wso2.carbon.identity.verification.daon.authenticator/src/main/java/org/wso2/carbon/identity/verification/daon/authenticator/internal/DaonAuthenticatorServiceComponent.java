@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -31,7 +31,9 @@ import org.wso2.carbon.extension.identity.verification.mgt.IdentityVerificationM
 import org.wso2.carbon.extension.identity.verification.provider.IdVProviderManager;
 import org.wso2.carbon.identity.application.authentication.framework.ApplicationAuthenticator;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
+import org.wso2.carbon.identity.flow.execution.engine.graph.Executor;
 import org.wso2.carbon.identity.verification.daon.authenticator.DaonAuthenticator;
+import org.wso2.carbon.identity.verification.daon.authenticator.DaonExecutor;
 import org.wso2.carbon.identity.verification.daon.authenticator.DaonPostUserRegistrationHandler;
 
 /**
@@ -52,6 +54,8 @@ public class DaonAuthenticatorServiceComponent {
                     ApplicationAuthenticator.class.getName(), new DaonAuthenticator(), null);
             ctxt.getBundleContext().registerService(
                     AbstractEventHandler.class.getName(), new DaonPostUserRegistrationHandler(), null);
+            ctxt.getBundleContext().registerService(
+                    Executor.class.getName(), new DaonExecutor(), null);
             if (LOG.isDebugEnabled()) {
                 LOG.debug("DaonAuthenticator bundle activated successfully.");
             }
@@ -87,7 +91,7 @@ public class DaonAuthenticatorServiceComponent {
     @Reference(
             name = "IdentityVerificationManager",
             service = IdentityVerificationManager.class,
-            cardinality = ReferenceCardinality.MANDATORY,
+            cardinality = ReferenceCardinality.OPTIONAL,
             policy = ReferencePolicy.DYNAMIC,
             unbind = "unsetIdentityVerificationManager")
     protected void setIdentityVerificationManager(IdentityVerificationManager identityVerificationManager) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.verification.daon.authenticator.internal;
 
 import org.wso2.carbon.extension.identity.verification.mgt.IdentityVerificationManager;
 import org.wso2.carbon.extension.identity.verification.provider.IdVProviderManager;
+import org.wso2.carbon.idp.mgt.IdpManager;
 
 /**
  * Service holder for the Daon TrustX authenticator OSGi bundle.
@@ -28,6 +29,7 @@ public class DaonAuthenticatorDataHolder {
 
     private static IdVProviderManager idVProviderManager;
     private static IdentityVerificationManager identityVerificationManager;
+    private static IdpManager idpManager;
 
     private DaonAuthenticatorDataHolder() {
     }
@@ -45,13 +47,23 @@ public class DaonAuthenticatorDataHolder {
 
         DaonAuthenticatorDataHolder.idVProviderManager = idVProviderManager;
     }
+//
+//    public static IdpManager getIdpManager() {
+//
+//        if (idpManager == null) {
+//            throw new RuntimeException("IdpProviderManager was not set during " +
+//                    "DaonAuthenticatorServiceComponent startup");
+//        }
+//        return idpManager;
+//    }
+//
+//    public static void setIdpManager(IdpManager idpManager) {
+//
+//        DaonAuthenticatorDataHolder.idpManager = idpManager;
+//    }
 
     public static IdentityVerificationManager getIdentityVerificationManager() {
 
-        if (identityVerificationManager == null) {
-            throw new RuntimeException("IdentityVerificationManager was not set during " +
-                    "DaonAuthenticatorServiceComponent startup");
-        }
         return identityVerificationManager;
     }
 
