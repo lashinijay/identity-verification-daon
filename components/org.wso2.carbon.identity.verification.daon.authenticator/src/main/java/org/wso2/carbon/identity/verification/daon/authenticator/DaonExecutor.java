@@ -24,18 +24,27 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.oltu.oauth2.client.response.OAuthClientResponse;
 import org.json.JSONObject;
+import org.wso2.carbon.extension.identity.verification.mgt.exception.IdentityVerificationException;
+import org.wso2.carbon.extension.identity.verification.mgt.model.IdVClaim;
+import org.wso2.carbon.extension.identity.verification.provider.exception.IdVProviderMgtException;
+import org.wso2.carbon.extension.identity.verification.provider.model.IdVProvider;
 import org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants;
 import org.wso2.carbon.identity.application.authenticator.oidc.OpenIDConnectExecutor;
+import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.flow.execution.engine.exception.FlowEngineException;
 import org.wso2.carbon.identity.flow.execution.engine.model.ExecutorResponse;
 import org.wso2.carbon.identity.flow.execution.engine.model.FlowExecutionContext;
 import org.wso2.carbon.identity.verification.daon.authenticator.constants.DaonAuthenticatorConstants;
+import org.wso2.carbon.identity.verification.daon.authenticator.internal.DaonAuthenticatorDataHolder;
+import org.wso2.carbon.user.api.UserStoreException;
+import org.wso2.carbon.user.core.UniqueIDUserStoreManager;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import static org.wso2.carbon.identity.flow.execution.engine.Constants.USERNAME_CLAIM_URI;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantId;
 import static org.wso2.carbon.identity.verification.daon.authenticator.constants.DaonAuthenticatorConstants.*;
 
 /**
@@ -142,18 +151,82 @@ public class DaonExecutor extends OpenIDConnectExecutor {
             }
             String claimUri = DaonAuthenticatorConstants.CLAIM_DIALECT_URI + "/" + key;
             extractedClaims.put(claimUri, claimValue);
-//            userAttributes.put(claimUri, claimValue);
         }
 
-        storeVerifiedClaimsInThreadLocal(extractedClaims);
+        String extractedName = extractedClaims.get("http://wso2.org/daon/claims/family_name_and_given_name");
+        String givenName;
+        if (flowExecutionContext.getFlowUser() != null) {
+            givenName = flowExecutionContext.getFlowUser().getClaim(
+                    "http://wso2.org/claims/givenname").toString().toLowerCase();
+            if (extractedName == null || !extractedName.toLowerCase().contains(givenName)) {
+                lockUserAccount(flowExecutionContext);
+                throw handleFlowEngineServerException("Identity verification failed: name mismatch. " +
+                        "User account has been locked.", null);
+            }
+            int tenantId = IdentityTenantUtil.getTenantId(flowExecutionContext.getTenantDomain());
+            String userId = flowExecutionContext.getFlowUser().getUserId();
+            List<IdVClaim> idVClaims = DaonPostUserRegistrationHandler.buildIdVClaims(userId, tenantId, extractedClaims);
+            try {
+                DaonAuthenticatorDataHolder.getIdentityVerificationManager()
+                        .addIdVClaims(userId, idVClaims, tenantId);
+            } catch (IdentityVerificationException e) {
+                throw new FlowEngineException("Error persisting Daon verified claims after user registration.");
+            }
+        }
+
+        try {
+            storeVerifiedClaimsInThreadLocal(extractedClaims);
+        } catch (IdVProviderMgtException e) {
+            throw new FlowEngineException("Error storing Daon verified claims in thread-local properties " +
+                    "for post-registration persistence.");
+        }
 
         return userAttributes;
     }
 
-    private void storeVerifiedClaimsInThreadLocal(Map<String, String> verifiedClaims) {
+    private void lockUserAccount(FlowExecutionContext context) {
+
+        if (context.getFlowUser() == null) {
+            LOG.warn("Cannot lock account: flow user is not available in context.");
+            return;
+        }
+        String userId = context.getFlowUser().getUserId();
+        if (StringUtils.isBlank(userId)) {
+            LOG.warn("Cannot lock account: user ID is blank in flow context.");
+            return;
+        }
+        try {
+            int tenantId = IdentityTenantUtil.getTenantId(context.getTenantDomain());
+            org.wso2.carbon.user.api.UserStoreManager usm =
+                    DaonAuthenticatorDataHolder.getRealmService()
+                            .getTenantUserRealm(tenantId)
+                            .getUserStoreManager();
+            if (usm instanceof UniqueIDUserStoreManager) {
+//                ((UniqueIDUserStoreManager) usm).setUserClaimValueWithID(
+//                        userId, ACCOUNT_LOCKED_CLAIM, "true", null);
+                LOG.warn("User account locked due to IDV name mismatch. User ID: " + userId);
+            } else {
+                LOG.warn("UniqueIDUserStoreManager not available; account not locked for user: " + userId);
+            }
+        } catch (UserStoreException e) {
+            LOG.error("Failed to lock account for user: " + userId, e);
+        }
+    }
+
+    private void storeVerifiedClaimsInThreadLocal(Map<String, String> verifiedClaims) throws IdVProviderMgtException {
 
         Map<String, Object> threadLocalProps = IdentityUtil.threadLocalProperties.get();
         threadLocalProps.put(THREAD_LOCAL_DAON_VERIFIED_CLAIMS, verifiedClaims);
-        threadLocalProps.put(THREAD_LOCAL_DAON_IDVP_ID, DAON_IDV_ID);
+
+        IdVProvider idVProvider;
+
+        try {
+            idVProvider = DaonAuthenticatorDataHolder.getIdVProviderManager().getIdVProviderByName(
+                    DAON_IDV_PROVIDER_ID, getTenantId());
+        } catch (IdVProviderMgtException e) {
+            throw new IdVProviderMgtException("Error retrieving Daon Identity Verification Provider details for " +
+                    "thread-local storage of IDVP ID.", e.getMessage());
+        }
+        threadLocalProps.put(THREAD_LOCAL_DAON_IDVP_ID, idVProvider.getIdVProviderUuid());
     }
 }

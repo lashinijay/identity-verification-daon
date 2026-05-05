@@ -32,7 +32,6 @@ import org.wso2.carbon.identity.application.authentication.framework.model.Authe
 import org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants;
 import org.wso2.carbon.identity.application.authenticator.oidc.OpenIDConnectAuthenticator;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
-import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
@@ -103,14 +102,16 @@ public class DaonAuthenticator extends OpenIDConnectAuthenticator implements Fed
                                                   AuthenticationContext context)
             throws AuthenticationFailedException {
 
-        Map<String, String> authenticatorProperties = context.getAuthenticatorProperties();
-        String idvpId = authenticatorProperties.get(DAON_IDVP_ID);
-        if (StringUtils.isBlank(idvpId)) {
+        int tenantId = getTenantId(context);
+        IdVProvider idVProvider;
+
+        try {
+            idVProvider = DaonAuthenticatorDataHolder.getIdVProviderManager().getIdVProviderByName(
+                    DaonAuthenticatorConstants.DAON_IDV_PROVIDER_ID, tenantId);
+        } catch (IdVProviderMgtException e) {
             throw new AuthenticationFailedException("Authenticator property '" + DAON_IDVP_ID + "' is not configured.");
         }
 
-        int tenantId = getTenantId(context);
-        IdVProvider idVProvider = resolveIdVProvider(idvpId, tenantId);
         Map<String, String> configMap = extractConfigMap(idVProvider);
         List<String> daonClaimNames = new ArrayList<>(idVProvider.getClaimMappings().values());
 

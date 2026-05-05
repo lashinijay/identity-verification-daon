@@ -20,7 +20,7 @@ package org.wso2.carbon.identity.verification.daon.authenticator.internal;
 
 import org.wso2.carbon.extension.identity.verification.mgt.IdentityVerificationManager;
 import org.wso2.carbon.extension.identity.verification.provider.IdVProviderManager;
-import org.wso2.carbon.idp.mgt.IdpManager;
+import org.wso2.carbon.user.core.service.RealmService;
 
 /**
  * Service holder for the Daon TrustX authenticator OSGi bundle.
@@ -29,7 +29,7 @@ public class DaonAuthenticatorDataHolder {
 
     private static IdVProviderManager idVProviderManager;
     private static IdentityVerificationManager identityVerificationManager;
-    private static IdpManager idpManager;
+    private static RealmService realmService;
 
     private DaonAuthenticatorDataHolder() {
     }
@@ -47,20 +47,6 @@ public class DaonAuthenticatorDataHolder {
 
         DaonAuthenticatorDataHolder.idVProviderManager = idVProviderManager;
     }
-//
-//    public static IdpManager getIdpManager() {
-//
-//        if (idpManager == null) {
-//            throw new RuntimeException("IdpProviderManager was not set during " +
-//                    "DaonAuthenticatorServiceComponent startup");
-//        }
-//        return idpManager;
-//    }
-//
-//    public static void setIdpManager(IdpManager idpManager) {
-//
-//        DaonAuthenticatorDataHolder.idpManager = idpManager;
-//    }
 
     public static IdentityVerificationManager getIdentityVerificationManager() {
 
@@ -70,5 +56,15 @@ public class DaonAuthenticatorDataHolder {
     public static void setIdentityVerificationManager(IdentityVerificationManager identityVerificationManager) {
 
         DaonAuthenticatorDataHolder.identityVerificationManager = identityVerificationManager;
+    }
+
+    public static RealmService getRealmService() {
+
+        return realmService;
+    }
+
+    public static void setRealmService(RealmService realmService) {
+
+        DaonAuthenticatorDataHolder.realmService = realmService;
     }
 }

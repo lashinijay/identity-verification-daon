@@ -105,4 +105,7 @@ public class DaonAuthenticatorConstants {
     public static final String CLAIM_ADDRESS_FORMATTED = "formatted";
 
     public static final String USER_ID_CLAIM = "http://wso2.org/claims/userid";
+
+    // IS identity claim used to lock a user account
+    public static final String ACCOUNT_LOCKED_CLAIM = "http://wso2.org/claims/identity/accountLocked";
 }

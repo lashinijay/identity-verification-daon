@@ -114,7 +114,7 @@ public class DaonPostUserRegistrationHandler extends AbstractEventHandler {
         }
     }
 
-    private List<IdVClaim> buildIdVClaims(String userId, int tenantId, Map<String, String> verifiedClaims)  {
+    public static List<IdVClaim> buildIdVClaims(String userId, int tenantId, Map<String, String> verifiedClaims)  {
 
         List<IdVClaim> idVClaims = new ArrayList<>();
         String completedAt = Instant.now().toString();

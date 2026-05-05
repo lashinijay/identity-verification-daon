@@ -424,6 +424,7 @@
         <imp.pkg.version.javax.servlet>[2.6,3)</imp.pkg.version.javax.servlet>
         <oltu.package.import.version.range>[1.0.0.wso2v1,2.0.0)</oltu.package.import.version.range>
         <carbon.identity.application.authenticator.oidc.imp.pkg.version.range>[5.12.0,8.0.0)</carbon.identity.application.authenticator.oidc.imp.pkg.version.range>
+        <identity.organization.management.imp.pkg.version.range>[1.0.0,3.0.0)</identity.organization.management.imp.pkg.version.range>
 
         <!-- Unit test versions -->
         <testng.version>7.10.1</testng.version>
